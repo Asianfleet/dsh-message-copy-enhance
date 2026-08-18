@@ -1,0 +1,12 @@
+# dsh-message-copy-enhance bundle patch
+#
+# Registers the plugin as a Loader entry so the profile boot applies it.
+# The Host half (`lib/index.js`) is a no-op Cordis plugin; the browser half is
+# discovered by the client-modules Node side from this enabled Loader row
+# (the package declares `dsh.client` and exports `./client` → dist/client.js).
+#
+# A patch replaces the targeted row's whole `config`; `insert` appends new
+# rows. `name` resolves through the profile's installed packages.
+- insert:
+    - id: message-copy-enhance
+      name: dsh-message-copy-enhance

@@ -1,0 +1,45 @@
+{
+  "name": "dsh-message-copy-enhance",
+  "description": "Copy assistant output as Markdown: when you select text in a model message and copy, the clipboard receives Markdown with links, LaTeX sources ($...$) and code fences preserved instead of lossy rendered text.",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "exports": {
+    ".": "./lib/index.js",
+    "./client": "./dist/client.js",
+    "./src/*": "./src/*",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "lib",
+    "src",
+    "cordis.patch.yml"
+  ],
+  "scripts": {
+    "build": "node scripts/build.js",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test test/toMarkdown.test.ts test/bundle.test.ts test/package.test.ts"
+  },
+  "dsh": {
+    "client": {
+      "platform": "web",
+      "inject": []
+    },
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.0.1",
+    "@types/node": "^24.0.0",
+    "linkedom": "^0.18.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,7 @@
+node_modules/
+.tsc/
+dist/
+.tmp/
+.agents/
+.codex/
+.dsh/
