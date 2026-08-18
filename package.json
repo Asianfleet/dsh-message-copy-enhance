@@ -16,7 +16,7 @@
   "author": "Asianfleet <wangjianqing25@mails.ucas.ac.cn>",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Asianfleet/dsh-message-copy-enhance.git"
+    "url": "git+https://github.com/Asianfleet/dsh-message-copy-enhance.git"
   },
   "bugs": {
     "url": "https://github.com/Asianfleet/dsh-message-copy-enhance/issues"
