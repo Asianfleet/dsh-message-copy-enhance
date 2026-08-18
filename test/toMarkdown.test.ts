@@ -124,3 +124,35 @@ test("consecutive paragraphs are separated by one blank line", () => {
 	const html = "<p>first</p><p>second</p>";
 	assert.equal(convert(html), "first\n\nsecond");
 });
+
+test("shiki token spans keep their leading spaces (partial code-line selection)", () => {
+	// Real shiki output for `npm config set registry https://registry.npmjs.org`:
+	// every inter-word space is the leading character of the next token span.
+	const html =
+		'<div><span class="line"><span>npm</span><span> config</span><span> set</span>' +
+		'<span> registry</span><span> https://registry.npmjs.org</span></span></div>';
+	assert.equal(convert(html), "npm config set registry https://registry.npmjs.org");
+});
+
+test("token spans without a .line wrapper also keep spaces", () => {
+	// cloneContents can surface the token spans directly when the selection
+	// boundary cuts inside one of them.
+	const html = "<div><span>npm</span><span> config</span><span> set</span></div>";
+	assert.equal(convert(html), "npm config set");
+});
+
+test("multi-line partial code selection joins .line spans with newlines, not blank lines", () => {
+	const html =
+		"<div>" +
+		'<span class="line"><span>const</span><span> x</span></span>' +
+		'<span class="line"><span>=</span><span> 1;</span></span>' +
+		"</div>";
+	assert.equal(convert(html), "const x\n= 1;");
+});
+
+test("partial code selection keeps code verbatim (no markdown escaping)", () => {
+	const html =
+		'<div><span class="line"><span>echo</span><span> "*x*"</span>' +
+		"<span> [y]</span></span></div>";
+	assert.equal(convert(html), 'echo "*x*" [y]');
+});

@@ -99,6 +99,12 @@ function renderInline(node: Node): string {
 		const tex = el.textContent?.trim() ?? "";
 		return tex ? `$${tex}$` : "";
 	}
+	// shiki code lines: verbatim text (code is not markdown prose, so no
+	// escaping), one markdown line per rendered source line. Reached when a
+	// selection cuts through a code block without including the `pre`/`code`
+	// wrapper; shiki token spans inside each `.line` then join with their
+	// original spacing.
+	if (hasClass(el, "line")) return (el.textContent ?? "") + "\n";
 
 	switch (t) {
 		case "BR":
@@ -145,9 +151,12 @@ function renderInline(node: Node): string {
 			// a block inside an inline position — emit it as a fenced block
 			return `\n\n${codeBlockLines(el).join("\n")}\n\n`;
 		default: {
-			// generic inline container (SPAN, etc.)
-			const inner = childrenInline(el);
-			return inner.trim();
+			// generic inline container (SPAN, etc.). The text is NOT trimmed
+			// per element: syntax highlighters (shiki) split one line into
+			// token spans whose leading/trailing spaces carry the inter-word
+			// spacing, so trimming here would eat it. Surrounding whitespace
+			// is cleaned once at the assembled-line level instead.
+			return childrenInline(el);
 		}
 	}
 }
