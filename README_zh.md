@@ -58,6 +58,37 @@ npm run test:watch    # vitest —— watch 模式
 npm run test:coverage # vitest run --coverage —— v8 覆盖率报告
 ```
 
+## 发布
+
+发布流程由 [release-it](https://github.com/release-it/release-it) 驱动，基于 Conventional Commits 自动生成 CHANGELOG。在 `main` 分支、工作区干净时执行：
+
+```bash
+pnpm release
+```
+
+它是**交互式**的：先打印自上个 tag 以来的提交预览（按类型分组，并给出 conventional 推荐版本号），随后弹出提示让你选择下一个版本号（`patch` / `minor` / `major` / 预发布变体 / 自定义）。流程依次为：
+
+1. **检查**（`npm run check:release`）：版本号是合法 SemVer、版本号未与 npm 已发布版本重复、已设置 `GITHUB_TOKEN`、npm 已登录；随后运行类型检查与测试套件。
+2. **交互选择版本**——打印 changelog 预览后由你选择下一个版本号（提示中会显示 conventional 推荐值：`feat` → minor、`fix`/`perf`/`revert` → patch、破坏性变更 → major）。
+3. **生成 CHANGELOG**——基于自上个 tag 以来的提交、按所选版本重新生成 `CHANGELOG.md`。
+4. **构建**——`npm run build`（DSH 模块加载器格式的客户端 bundle）。
+5. **发布**——提交 `chore(release): vX.Y.Z`、打 tag `vX.Y.Z`、推送到 GitHub、创建 GitHub Release（release notes 取自 CHANGELOG）、最后 `npm publish`。
+
+前置条件：
+
+- 已导出 `GITHUB_PAT_TOKEN`（[GitHub PAT](https://docs.github.com/zh/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens)：Classic token 需 `repo` 权限；Fine-grained token 需对本仓库授予 **Contents: Read and write**；`gh auth token` 也可，`GITHUB_TOKEN` 作为备选同样支持），并执行过 `npm login`。协作者预检已关闭（`github.skipChecks`）——细粒度 token 调用该接口会 403，真实权限由 GitHub 在创建 Release 时强制校验。
+- 提交遵循 [Conventional Commits](https://www.conventionalcommits.org/zh-CN/) 规范；脚本只识别这些类型。
+
+常用变体：
+
+```bash
+pnpm release:dry                   # 预演：只预览全部流程，不产生任何变更
+pnpm release -- --increment=patch  # 跳过提示，强制 patch 递增（也可用 minor/major）
+pnpm release -- --ci               # 完全非交互（CI 用，默认退回 patch）
+```
+
+注意：若环境中设置了 `CI` 环境变量，release-it 会自动切换到非交互模式。
+
 ## 安装启用
 
 ```bash

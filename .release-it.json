@@ -1,0 +1,45 @@
+{
+  "$schema": "https://unpkg.com/release-it@21/schema/release-it.json",
+  "hooks": {
+    "before:init": ["npm run check:release"],
+    "after:bump": ["npm run build"]
+  },
+  "git": {
+    "requireCleanWorkingDir": true,
+    "requireBranch": "main",
+    "commitMessage": "chore(release): ${version}",
+    "tagName": "v${version}",
+    "tagAnnotation": "Release ${version}",
+    "push": true
+  },
+  "npm": {
+    "publish": true
+  },
+  "github": {
+    "release": true,
+    "tokenRef": "GITHUB_PAT_TOKEN",
+    "skipChecks": true
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "infile": "CHANGELOG.md",
+      "ignoreRecommendedBump": true,
+      "preset": {
+        "name": "conventionalcommits",
+        "types": [
+          { "type": "feat", "section": "Features" },
+          { "type": "fix", "section": "Bug Fixes" },
+          { "type": "perf", "section": "Performance Improvements" },
+          { "type": "revert", "section": "Reverts" },
+          { "type": "docs", "section": "Documentation", "effect": "changelog" },
+          { "type": "refactor", "section": "Code Refactoring", "effect": "changelog" },
+          { "type": "build", "section": "Build System", "effect": "changelog" },
+          { "type": "chore", "section": "Chores", "effect": "changelog" },
+          { "type": "test", "section": "Tests", "effect": "changelog" },
+          { "type": "style", "section": "Styles", "effect": "changelog" },
+          { "type": "ci", "section": "Continuous Integration", "effect": "changelog" }
+        ]
+      }
+    }
+  }
+}

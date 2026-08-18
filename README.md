@@ -58,6 +58,37 @@ npm run test:watch    # vitest — watch mode
 npm run test:coverage # vitest run --coverage — v8 coverage report
 ```
 
+## Release
+
+Releases are driven by [release-it](https://github.com/release-it/release-it) with a Conventional Commits changelog. Run from the `main` branch with a clean working tree:
+
+```bash
+pnpm release
+```
+
+It is **interactive**: first the commits since the last tag are shown as a changelog preview (grouped by type, including the conventional-commits recommended version), then you pick the next version from a prompt (`patch` / `minor` / `major` / pre-release variants / custom). What happens, in order:
+
+1. **Checks** (`npm run check:release`): version is valid SemVer, the version is not already published on npm (or there are new commits since its tag), `GITHUB_TOKEN` is set, npm is authenticated; then typecheck and the test suite run.
+2. **Prompt** — the changelog preview is printed and the next version is chosen interactively (the recommended bump from conventional commits is shown; `feat` → minor, `fix`/`perf`/`revert` → patch, breaking changes → major).
+3. **Changelog** — `CHANGELOG.md` is regenerated from the commits since the last tag, under the chosen version.
+4. **Build** — `npm run build` (the DSH module-loader client bundle).
+5. **Release** — commit `chore(release): vX.Y.Z`, tag `vX.Y.Z`, push to GitHub, create a GitHub Release (release notes from the changelog), then `npm publish`.
+
+Prerequisites:
+
+- `GITHUB_PAT_TOKEN` exported (a [GitHub PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) — a classic token with `repo` scope, or a fine-grained token with **Contents: Read and write** on this repo; `gh auth token` also works; `GITHUB_TOKEN` is accepted as a fallback), and `npm login`. The collaborator pre-check is skipped (`github.skipChecks`), since fine-grained tokens get a 403 on that endpoint; GitHub still enforces the real permissions when the release is created.
+- Commits following [Conventional Commits](https://www.conventionalcommits.org/); the script only recognizes those types.
+
+Useful variants:
+
+```bash
+pnpm release:dry                   # dry-run: previews everything without changing anything
+pnpm release -- --increment=patch  # skip the prompt and force a patch bump (or minor/major)
+pnpm release -- --ci               # fully non-interactive (for CI; falls back to a patch bump)
+```
+
+Note: if a `CI` environment variable is set, release-it automatically switches to non-interactive mode.
+
 ## Install
 
 ```bash
