@@ -1,5 +1,4 @@
-import test from "node:test";
-import assert from "node:assert/strict";
+import { test, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
@@ -43,8 +42,8 @@ function loadBundle({ window, document }: { window: PageWindow; document: Docume
 	};
 	const sandbox = { window, document, Node: window.Node, console };
 	vm.runInNewContext(source, sandbox, { filename: "dist/client.js" });
-	assert.ok(payload, "bundle must call window.__ModuleLoader__.load");
-	return payload as BundlePayload;
+	if (payload == null) throw new Error("bundle must call window.__ModuleLoader__.load");
+	return payload;
 }
 
 /**
@@ -134,14 +133,14 @@ function synthesizeCopy(
 test("bundle registers with the DSH module loader contract", () => {
 	const { document, window } = setupPage();
 	const payload = loadBundle({ window, document });
-	assert.equal(payload.id, "dsh-message-copy-enhance");
-	assert.equal(typeof payload.factory, "function");
+	expect(payload.id).toBe("dsh-message-copy-enhance");
+	expect(typeof payload.factory).toBe("function");
 	const exports = payload.factory(() => {
 		throw new Error("unexpected require");
 	});
-	assert.equal(typeof exports.apply, "function");
-	assert.ok(Array.isArray(exports.inject));
-	assert.equal(exports.name, "dsh-message-copy-enhance");
+	expect(typeof exports.apply).toBe("function");
+	expect(Array.isArray(exports.inject)).toBe(true);
+	expect(exports.name).toBe("dsh-message-copy-enhance");
 });
 
 test("apply registers a copy listener and dispose removes it", () => {
@@ -149,7 +148,7 @@ test("apply registers a copy listener and dispose removes it", () => {
 	const payload = loadBundle({ window, document });
 	const ctx = fakeCtx();
 	payload.factory(() => {}).apply(ctx);
-	assert.equal(ctx.disposers.length, 1, "ctx.effect registers a cleanup");
+	expect(ctx.disposers.length, "ctx.effect registers a cleanup").toBe(1);
 
 	// Realistic selection: it STARTS at a plain-text position (the first text
 	// node of the paragraph) while the message contains a link and math. The
@@ -157,21 +156,21 @@ test("apply registers a copy listener and dispose removes it", () => {
 	const paragraph = assistant.querySelector("p")!;
 	const textStart = paragraph.firstChild!;
 	const { prevented, records } = synthesizeCopy(document, window, mockRange(textStart, document));
-	assert.equal(prevented, true);
-	assert.equal(records["text/plain"], "See [x](https://x.dev) and math $E=mc^2$");
-	assert.equal(records["text/markdown"], records["text/plain"]);
+	expect(prevented).toBe(true);
+	expect(records["text/plain"]).toBe("See [x](https://x.dev) and math $E=mc^2$");
+	expect(records["text/markdown"]).toBe(records["text/plain"]);
 
 	// selection in a user message → default copy untouched
 	const userP = document.querySelector('[data-chat-flow-kind="user"] p')!;
 	const userCopy = synthesizeCopy(document, window, mockRange(userP, document));
-	assert.equal(userCopy.prevented, false);
-	assert.equal(userCopy.records["text/plain"], undefined);
+	expect(userCopy.prevented).toBe(false);
+	expect(userCopy.records["text/plain"]).toBeUndefined();
 
 	// after dispose → never intercepted again
 	ctx.disposers[0]();
 	const after = synthesizeCopy(document, window, mockRange(textStart, document));
-	assert.equal(after.prevented, false);
-	assert.equal(after.records["text/plain"], undefined);
+	expect(after.prevented).toBe(false);
+	expect(after.records["text/plain"]).toBeUndefined();
 });
 
 test("turn-level assistant nodes (kind=assistant) are intercepted too", () => {
@@ -187,8 +186,8 @@ test("turn-level assistant nodes (kind=assistant) are intercepted too", () => {
 
 	const p = assistant.querySelector("p")!;
 	const copy = synthesizeCopy(document, window, mockRange(p, document));
-	assert.equal(copy.prevented, true);
-	assert.equal(copy.records["text/plain"], "see [x](https://x.dev)");
+	expect(copy.prevented).toBe(true);
+	expect(copy.records["text/plain"]).toBe("see [x](https://x.dev)");
 });
 
 test("a plain-text assistant message without signature content is not intercepted", () => {
@@ -204,8 +203,8 @@ test("a plain-text assistant message without signature content is not intercepte
 
 	const p = plain.querySelector("p")!;
 	const copy = synthesizeCopy(document, window, mockRange(p, document));
-	assert.equal(copy.prevented, false);
-	assert.equal(copy.records["text/plain"], undefined);
+	expect(copy.prevented).toBe(false);
+	expect(copy.records["text/plain"]).toBeUndefined();
 });
 
 test("empty selection and selection outside chat are ignored", () => {
@@ -216,11 +215,11 @@ test("empty selection and selection outside chat are ignored", () => {
 
 	// collapsed selection
 	const collapsed = synthesizeCopy(document, window, null, { isCollapsed: true });
-	assert.equal(collapsed.prevented, false);
+	expect(collapsed.prevented).toBe(false);
 
 	// selection outside any flow item
 	const outside = synthesizeCopy(document, window, mockRange(document.body, document));
-	assert.equal(outside.prevented, false);
+	expect(outside.prevented).toBe(false);
 });
 
 test("a handler failure never breaks the default copy", () => {
@@ -234,5 +233,5 @@ test("a handler failure never breaks the default copy", () => {
 		throw new Error("boom");
 	};
 	const { prevented } = synthesizeCopy(document, window, range);
-	assert.equal(prevented, false);
+	expect(prevented).toBe(false);
 });

@@ -34,8 +34,8 @@ DSH 的模型输出由 `dsh-client-ui-conversation` → `dsh-client-ui-primitive
 ```
 dsh-message-copy-enhance/
 ├── package.json            # dsh.client 元数据（客户端插件声明）
-├── tsconfig.json           # typecheck 配置（strict，含 src/test/scripts）
-├── tsconfig.build.json     # 构建配置：src/client → .tsc/ 中间产物
+├── tsconfig.json           # typecheck 配置（strict，含 src/test/vite.config.ts）
+├── vite.config.ts          # vite 构建（DSH 模块加载器输出）+ vitest 配置
 ├── src/client/
 │   ├── index.ts            # 插件入口：copy 拦截 + apply/inject（TS，apply(ctx) 使用官方
 │   │                       #   @deepseek-ai/cordis 的 Context 类型，与 dsh-client-ui-* 一致）
@@ -43,19 +43,19 @@ dsh-message-copy-enhance/
 ├── lib/
 │   ├── index.js            # Host 侧 no-op 插件（DSH Loader 加载的 JS 入口）
 │   └── index.d.ts          # Host 入口的类型声明
-├── scripts/
-│   └── build.js            # tsc 编译 + 内联为 DSH 模块加载器格式 → dist/client.js
 ├── dist/client.js          # 构建产物（预生成）
-└── test/                   # node:test + tsx（.test.ts），转换器/bundle/包结构
+└── test/                   # vitest（.test.ts），转换器/bundle/包结构
 ```
 
 ## 构建与测试
 
 ```bash
-npm install           # 开发依赖：typescript / tsx / @types/node / linkedom / @deepseek-ai/cordis（官方类型）
+npm install           # 开发依赖：typescript / vite / vitest / @types/node / linkedom / @deepseek-ai/cordis（官方类型）
 npm run typecheck     # tsc -p tsconfig.json —— 全量类型检查（strict）
-npm run build         # tsc 编译 src/client → .tsc/，内联生成 dist/client.js 并清理中间产物
-npm test              # node --import tsx --test —— 36 个用例（TS 源码直接跑）
+npm run build         # vite build —— 把 src/client 打包为 DSH 模块加载器格式的 dist/client.js
+npm test              # vitest run —— 36 个用例（转换器 / 真实 bundle / 包结构）
+npm run test:watch    # vitest —— watch 模式
+npm run test:coverage # vitest run --coverage —— v8 覆盖率报告
 ```
 
 ## 安装启用

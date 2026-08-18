@@ -34,8 +34,8 @@ Other selections (user bubbles, tool cards, plain text) and empty selections are
 ```
 dsh-message-copy-enhance/
 ├── package.json            # dsh.client metadata (client plugin declaration)
-├── tsconfig.json           # typecheck config (strict, includes src/test/scripts)
-├── tsconfig.build.json     # build config: src/client → .tsc/ intermediate output
+├── tsconfig.json           # typecheck config (strict, includes src/test/vite.config.ts)
+├── vite.config.ts          # vite build (DSH module-loader output) + vitest config
 ├── src/client/
 │   ├── index.ts            # plugin entry: copy interception + apply/inject (TS, apply(ctx) uses the official
 │   │                       #   @deepseek-ai/cordis Context type, same as dsh-client-ui-*)
@@ -43,19 +43,19 @@ dsh-message-copy-enhance/
 ├── lib/
 │   ├── index.js            # Host-side no-op plugin (JS entry loaded by the DSH Loader)
 │   └── index.d.ts          # type declarations for the host entry
-├── scripts/
-│   └── build.js            # tsc compile + inline into DSH module-loader format → dist/client.js
 ├── dist/client.js          # build artifact (pre-generated)
-└── test/                   # node:test + tsx (.test.ts): converter / bundle / package layout
+└── test/                   # vitest (.test.ts): converter / bundle / package layout
 ```
 
 ## Build & test
 
 ```bash
-npm install           # dev deps: typescript / tsx / @types/node / linkedom / @deepseek-ai/cordis (official types)
+npm install           # dev deps: typescript / vite / vitest / @types/node / linkedom / @deepseek-ai/cordis (official types)
 npm run typecheck     # tsc -p tsconfig.json — full type check (strict)
-npm run build         # tsc compile src/client → .tsc/, inline to dist/client.js, clean intermediate output
-npm test              # node --import tsx --test — 36 cases (runs the TS sources directly)
+npm run build         # vite build — bundle src/client into dist/client.js in the DSH module-loader format
+npm test              # vitest run — 36 cases (converter / real bundle / package layout)
+npm run test:watch    # vitest — watch mode
+npm run test:coverage # vitest run --coverage — v8 coverage report
 ```
 
 ## Install
