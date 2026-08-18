@@ -3,9 +3,7 @@ import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
 
-/** Real KaTeX output (same engine DSH's renderer uses) for fidelity tests. */
-const KATEX_PATH = "D:/Apps/DSH Desktop/resources/app.asar.unpacked/node_modules/katex";
-
+/** Real KaTeX output (same engine DSH's renderer uses) for fidelity tests; katex is a pinned devDependency. */
 /** The tiny slice of KaTeX's API the fidelity tests need (structural typing). */
 interface KatexModule {
 	renderToString(tex: string, options?: KatexRenderOptions): string;
@@ -17,7 +15,7 @@ interface KatexRenderOptions {
 	strict?: boolean | string;
 }
 
-export const katex = require(KATEX_PATH) as KatexModule;
+export const katex = require("katex") as KatexModule;
 
 export function renderKatex(tex: string, displayMode = false): string {
 	return katex.renderToString(tex, { displayMode, throwOnError: false, strict: "ignore" });
