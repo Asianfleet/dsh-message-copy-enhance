@@ -1,73 +1,80 @@
 # dsh-message-copy-enhance
 
-DeepSeek Harness 客户端 UI 插件：**划选模型输出并复制时，把剪贴板内容改写为 Markdown**，链接、LaTeX 公式源码、代码块语言等信息不再丢失。
+[![npm version](https://img.shields.io/npm/v/dsh-message-copy-enhance.svg)](https://www.npmjs.com/package/dsh-message-copy-enhance)
+[![npm downloads](https://img.shields.io/npm/dm/dsh-message-copy-enhance.svg)](https://www.npmjs.com/package/dsh-message-copy-enhance)
+[![License: MIT](https://img.shields.io/npm/l/dsh-message-copy-enhance.svg)](LICENSE)
+[![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6.svg)](tsconfig.json)
 
-## 工作原理
+[English](README.md) · [中文](README_zh.md)
 
-DSH 的模型输出由 `dsh-client-ui-conversation` → `dsh-client-ui-primitives` 渲染：
+A DeepSeek Harness client UI plugin: **when you select text in a model message and copy it, the clipboard content is rewritten to Markdown**, so links, LaTeX source, code-fence language info, and more are no longer lost.
 
-| 内容 | DOM 形态 | 恢复方式 |
+## How it works
+
+DSH renders model output via `dsh-client-ui-conversation` → `dsh-client-ui-primitives`:
+
+| Content | DOM shape | Recovery |
 |---|---|---|
-| 链接 | `<a href="...">` | 直接取 `href`，输出 `[label](url)` |
-| 行内/块级 LaTeX | KaTeX 渲染的 `.katex` / `.katex-display` | 从 MathML 分支的 `<annotation encoding="application/x-tex">` 取回 **TeX 源码**，输出 `$...$` / `$$...$$` |
-| 代码块 | `.md-code-block`（banner 显示语言）+ `pre` | 输出围栏代码块，语言取自 `language-*` class 或 banner 的 infostring |
-| 标题/强调/列表/引用/表格 | 标准 HTML | 还原为 GFM |
+| Links | `<a href="...">` | Take the `href` directly, output `[label](url)` |
+| Inline / block LaTeX | KaTeX-rendered `.katex` / `.katex-display` | Retrieve the **TeX source** from the `<annotation encoding="application/x-tex">` in the MathML branch, output `$...$` / `$$...$$` |
+| Code blocks | `.md-code-block` (banner shows the language) + `pre` | Output a fenced code block; the language comes from the `language-*` class or the banner's infostring |
+| Headings / emphasis / lists / quotes / tables | Standard HTML | Recovered as GFM |
 
-插件在 `document` 上以**捕获阶段**监听 `copy` 事件，仅当选区起点落在 `[data-chat-flow-kind="assistant"]` 消息内且包含 markdown 特征元素时接管：
+The plugin listens for `copy` on `document` in the **capture phase**, and takes over only when the selection starts inside a `[data-chat-flow-kind="assistant"]` message and contains markdown-significant elements:
 
-1. 把选区扩展到完整的 `.katex` 元素（选中公式中间也能拿到完整源码）
-2. `Range.cloneContents()` 克隆选区 DOM
-3. 用内置的零依赖 DOM→Markdown 转换器（`src/client/toMarkdown.ts`，TypeScript 编写、类型擦除后内联进 bundle）还原 markdown
-4. `preventDefault()` 后写入 `text/plain` 与 `text/markdown`
+1. Expand the selection to the full `.katex` element (selecting in the middle of a formula still gets the complete source)
+2. Clone the selection DOM with `Range.cloneContents()`
+3. Recover the markdown with the built-in zero-dependency DOM→Markdown converter (`src/client/toMarkdown.ts`, written in TypeScript, type-erased and inlined into the bundle)
+4. `preventDefault()` and write `text/plain` and `text/markdown`
 
-其余选区（用户气泡、工具卡片、普通文本）与空选区完全不受影响；转换失败时自动回退默认复制。
+Other selections (user bubbles, tool cards, plain text) and empty selections are completely unaffected; if conversion fails, the default copy behavior is restored automatically.
 
-## 项目结构
+## Project structure
 
 ```
 dsh-message-copy-enhance/
-├── package.json            # dsh.client 元数据（客户端插件声明）
-├── tsconfig.json           # typecheck 配置（strict，含 src/test/scripts）
-├── tsconfig.build.json     # 构建配置：src/client → .tsc/ 中间产物
+├── package.json            # dsh.client metadata (client plugin declaration)
+├── tsconfig.json           # typecheck config (strict, includes src/test/scripts)
+├── tsconfig.build.json     # build config: src/client → .tsc/ intermediate output
 ├── src/client/
-│   ├── index.ts            # 插件入口：copy 拦截 + apply/inject（TS，apply(ctx) 使用官方
-│   │                       #   @deepseek-ai/cordis 的 Context 类型，与 dsh-client-ui-* 一致）
-│   └── toMarkdown.ts       # DOM→Markdown 转换器（TS，零依赖）
+│   ├── index.ts            # plugin entry: copy interception + apply/inject (TS, apply(ctx) uses the official
+│   │                       #   @deepseek-ai/cordis Context type, same as dsh-client-ui-*)
+│   └── toMarkdown.ts       # DOM→Markdown converter (TS, zero dependencies)
 ├── lib/
-│   ├── index.js            # Host 侧 no-op 插件（DSH Loader 加载的 JS 入口）
-│   └── index.d.ts          # Host 入口的类型声明
+│   ├── index.js            # Host-side no-op plugin (JS entry loaded by the DSH Loader)
+│   └── index.d.ts          # type declarations for the host entry
 ├── scripts/
-│   └── build.js            # tsc 编译 + 内联为 DSH 模块加载器格式 → dist/client.js
-├── dist/client.js          # 构建产物（预生成）
-└── test/                   # node:test + tsx（.test.ts），转换器/bundle/包结构
+│   └── build.js            # tsc compile + inline into DSH module-loader format → dist/client.js
+├── dist/client.js          # build artifact (pre-generated)
+└── test/                   # node:test + tsx (.test.ts): converter / bundle / package layout
 ```
 
-## 构建与测试
+## Build & test
 
 ```bash
-npm install           # 开发依赖：typescript / tsx / @types/node / linkedom / @deepseek-ai/cordis（官方类型）
-npm run typecheck     # tsc -p tsconfig.json —— 全量类型检查（strict）
-npm run build         # tsc 编译 src/client → .tsc/，内联生成 dist/client.js 并清理中间产物
-npm test              # node --import tsx --test —— 32 个用例（TS 源码直接跑）
+npm install           # dev deps: typescript / tsx / @types/node / linkedom / @deepseek-ai/cordis (official types)
+npm run typecheck     # tsc -p tsconfig.json — full type check (strict)
+npm run build         # tsc compile src/client → .tsc/, inline to dist/client.js, clean intermediate output
+npm test              # node --import tsx --test — 36 cases (runs the TS sources directly)
 ```
 
-## 安装启用
+## Install
 
 ```bash
 dsh plugin --profile desktop add dsh-message-copy-enhance
 ```
 
-## 使用
+## Usage
 
-在任意模型回答中**划选**内容后 `Ctrl/Cmd+C`，粘贴到 Typora / Obsidian / VS Code / 任意 markdown 编辑器即可得到完整 markdown。
+**Select** content in any model answer and press `Ctrl/Cmd+C`, then paste into Typora / Obsidian / VS Code / any markdown editor to get the full markdown.
 
-## 边界与限制
+## Limitations
 
-- 选区**跨越多条消息**时不拦截（只处理起点在 assistant 消息内的选区）。
-- 渲染时被白名单过滤掉的链接（如 `file:`、相对链接）本来就不存在 `href`，无法恢复。
-- 代码块只恢复**选中的部分行**（不会强制扩展整块）；语言标记在选中区域不包含 banner 时会缺失。
-- KaTeX 渲染失败显示为 `.katex-error` 的元素按 `$源码$` 输出。
-- 表格以 GFM 管道表输出，`|` 会被转义。
+- Selections **spanning multiple messages** are not intercepted (only selections starting inside an assistant message are handled).
+- Links filtered out by the render whitelist (e.g. `file:`, relative links) have no `href` to begin with and cannot be recovered.
+- Code blocks only recover the **selected lines** (no forced expansion of the whole block); the language tag is missing when the selected region does not include the banner.
+- Elements shown as `.katex-error` (KaTeX render failure) are output as `$source$`.
+- Tables are output as GFM pipe tables; `|` is escaped.
 
 ## License
 

@@ -1,7 +1,27 @@
 {
   "name": "dsh-message-copy-enhance",
-  "description": "Copy assistant output as Markdown: when you select text in a model message and copy, the clipboard receives Markdown with links, LaTeX sources ($...$) and code fences preserved instead of lossy rendered text.",
   "version": "0.1.0",
+  "description": "Copy dsh assistant output as Markdown, preserving links, LaTeX sources and code fences.",
+  "keywords": [
+    "dsh",
+    "deepseek-harness",
+    "plugin",
+    "client-plugin",
+    "markdown",
+    "copy",
+    "clipboard",
+    "latex"
+  ],
+  "license": "MIT",
+  "author": "Asianfleet <wangjianqing25@mails.ucas.ac.cn>",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Asianfleet/dsh-message-copy-enhance.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Asianfleet/dsh-message-copy-enhance/issues"
+  },
+  "homepage": "https://github.com/Asianfleet/dsh-message-copy-enhance#readme",
   "type": "module",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -15,11 +35,13 @@
     "dist",
     "lib",
     "src",
-    "cordis.patch.yml"
+    "cordis.patch.yml",
+    "README_zh.md"
   ],
   "scripts": {
     "build": "node scripts/build.js",
     "prepare": "node scripts/build.js",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --import tsx --test test/toMarkdown.test.ts test/bundle.test.ts test/package.test.ts"
   },
@@ -41,6 +63,5 @@
     "linkedom": "^0.18.0",
     "tsx": "^4.19.0",
     "typescript": "^5.6.0"
-  },
-  "license": "MIT"
+  }
 }
