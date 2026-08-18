@@ -19,6 +19,7 @@
   ],
   "scripts": {
     "build": "node scripts/build.js",
+    "prepare": "node scripts/build.js",
     "typecheck": "tsc -p tsconfig.json",
     "test": "node --import tsx --test test/toMarkdown.test.ts test/bundle.test.ts test/package.test.ts"
   },
