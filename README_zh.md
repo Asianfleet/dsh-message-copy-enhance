@@ -95,6 +95,14 @@ pnpm release -- --ci               # 完全非交互（CI 用，默认退回 pat
 dsh plugin --profile desktop add dsh-message-copy-enhance
 ```
 
+## 升级
+
+```bash
+dsh plugin --profile desktop add dsh-message-copy-enhance@latest
+```
+
+本插件尚未发布 1.0，`^0.1.0` 这类 caret 范围只覆盖 **patch 版本**（`0.1.x`）；**minor 升级**（如 `0.1 → 0.2`）不在该范围内，`dsh plugin update` 不会自动升级。请用 `@latest`（或 `@<版本号>`）显式升级。
+
 ## 使用
 
 在任意模型回答中**划选**内容后 `Ctrl/Cmd+C`，粘贴到 Typora / Obsidian / VS Code / 任意 markdown 编辑器即可得到完整 markdown。

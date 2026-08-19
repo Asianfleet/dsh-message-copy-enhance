@@ -95,6 +95,14 @@ Note: if a `CI` environment variable is set, release-it automatically switches t
 dsh plugin --profile desktop add dsh-message-copy-enhance
 ```
 
+## Upgrading
+
+```bash
+dsh plugin --profile desktop add dsh-message-copy-enhance@latest
+```
+
+This package is pre-1.0, and a caret range like `^0.1.0` covers **patch releases only** (`0.1.x`) — a **minor** bump (`0.1 → 0.2`) falls outside the range, so `dsh plugin update` will not pick it up. Upgrade explicitly with `@latest` (or `@<version>`).
+
 ## Usage
 
 **Select** content in any model answer and press `Ctrl/Cmd+C`, then paste into Typora / Obsidian / VS Code / any markdown editor to get the full markdown.
