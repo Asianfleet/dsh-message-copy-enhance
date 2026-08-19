@@ -48,14 +48,40 @@ function shouldSkip(el: Element): boolean {
 	return false;
 }
 
+/** Unicode letter, digit or underscore — CommonMark's emphasis boundaries. */
+const WORD_CHAR = /[\p{L}\p{N}_]/u;
+
+/**
+ * Whether the code point at UTF-16 index `i` of `text` is a word character.
+ * `codePointAt` reads the full code point even when `i` lands on a surrogate
+ * half, so astral characters next to an underscore are handled safely.
+ */
+function isWordCharAt(text: string, i: number): boolean {
+	if (i < 0 || i >= text.length) return false;
+	const code = text.codePointAt(i);
+	return code != null && WORD_CHAR.test(String.fromCodePoint(code));
+}
+
+/** An `_` between two word characters can never open or close CommonMark emphasis. */
+function isIntrawordUnderscore(text: string, index: number): boolean {
+	return isWordCharAt(text, index - 1) && isWordCharAt(text, index + 1);
+}
+
 /**
  * Escape markdown-significant characters in plain text.
  * - "raw": no escaping at all (code content must stay verbatim)
- * - "text": escape `\`, `` ` ``, `*`, `_`, `[`, `]`
+ * - "text": escape `\`, `` ` ``, `*`, `_`, `[`, `]` — except **intraword**
+ *   underscores (`node_modules`): CommonMark never treats those as emphasis
+ *   (`_` needs word boundaries), so a backslash would only corrupt verbatim
+ *   text. Underscores that could actually open/close emphasis (word-boundary
+ *   positions) are still escaped for round-trip fidelity.
  */
 function escapeText(text: string, mode: "raw" | "text"): string {
 	if (mode === "raw") return text;
-	return text.replace(/([\\`*_[\]])/g, "\\$1");
+	return text.replace(/([\\`*_[\]])/g, (ch, _group, offset, whole) => {
+		if (ch === "_" && isIntrawordUnderscore(whole, offset)) return ch;
+		return `\\${ch}`;
+	});
 }
 
 function childrenInline(el: Element): string {

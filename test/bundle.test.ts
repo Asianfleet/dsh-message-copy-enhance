@@ -71,7 +71,6 @@ function setupPage() {
 	const flow = document.createElement("div");
 	flow.setAttribute("data-chat-flow", "");
 	const assistant = document.createElement("div");
-	// The served build tags step-level assistant content as `assistant-step`.
 	assistant.setAttribute("data-chat-flow-kind", "assistant-step");
 	assistant.innerHTML =
 		'<p>See <a href="https://x.dev">x</a> and math <span class="katex"><span class="katex-mathml"><math><semantics><annotation encoding="application/x-tex">E=mc^2</annotation></semantics></math></span><span class="katex-html"><span>E=mc<sup>2</sup></span></span></span></p>';
@@ -83,6 +82,16 @@ function setupPage() {
 	return { document, window, assistant, user };
 }
 
+/** An assistant message carrying only a code block (helper for the code-copy tests). */
+function setupCodePage(codeHtml: string) {
+	const { document, window } = setupPage();
+	const assistant = document.createElement("div");
+	assistant.setAttribute("data-chat-flow-kind", "assistant-step");
+	assistant.innerHTML = codeHtml;
+	document.body.append(assistant);
+	return { document, window, assistant };
+}
+
 /** A mock Range: `cloneContents` clones the target element into a fresh container. */
 function mockRange(startContainer: Node, document: Document): Range {
 	return {
@@ -90,6 +99,13 @@ function mockRange(startContainer: Node, document: Document): Range {
 		endContainer: startContainer,
 		setStartBefore() {},
 		setEndAfter() {},
+		// A real Range stringifies to the text of its contents; for the
+		// whole-node selections these tests drive, that is the node's text.
+		toString() {
+			return startContainer.nodeType === 3
+				? (startContainer as Text).data
+				: (startContainer as Element).textContent ?? "";
+		},
 		cloneContents() {
 			const holder = document.createElement("div");
 			holder.innerHTML = startContainer.parentElement?.innerHTML ?? "";
@@ -234,4 +250,79 @@ test("a handler failure never breaks the default copy", () => {
 	};
 	const { prevented } = synthesizeCopy(document, window, range);
 	expect(prevented).toBe(false);
+});
+
+// ---------------------------------------------------------------------------
+// Code blocks: a selection strictly inside a code element must copy verbatim.
+// cloneContents strips the pre/code wrapper there, so without the up-front
+// short-circuit the converter would re-escape the source as markdown prose
+// (`__` → `\_\_`). Regression: Asianfleet/dsh-message-copy-enhance.
+// ---------------------------------------------------------------------------
+
+test("selection strictly inside a plain code block copies code verbatim (no escaping)", () => {
+	const command = "git add data/plugins/Asianfleet__dsh-message-copy-enhance.yml README.md README.zh.md";
+	const { document, window, assistant } = setupCodePage(`<pre class="plain"><code>${command}</code></pre>`);
+
+	const payload = loadBundle({ window, document });
+	const ctx = fakeCtx();
+	payload.factory(() => {}).apply(ctx);
+
+	const code = assistant.querySelector("code")!;
+	const copy = synthesizeCopy(document, window, mockRange(code.firstChild!, document));
+	expect(copy.prevented).toBe(true);
+	expect(copy.records["text/plain"]).toBe(command);
+	expect(copy.records["text/markdown"]).toBe(command);
+});
+
+test("selection inside shiki-highlighted code keeps line reconstruction (no escaping)", () => {
+	const { document, window, assistant } = setupCodePage(
+		'<div class="md-code-block"><div><div><div>bash</div><div><button type="button">复制</button></div></div></div>' +
+			'<pre class="shiki"><code>' +
+			'<span class="line"><span>git add</span><span> a__b</span></span>' +
+			'<span class="line"><span>echo</span><span> *x*</span></span>' +
+			"</code></pre></div>"
+	);
+
+	const payload = loadBundle({ window, document });
+	const ctx = fakeCtx();
+	payload.factory(() => {}).apply(ctx);
+
+	// The selection starts on a .line span, so the code-container short-circuit
+	// must NOT hijack it: the converter rebuilds the inter-line newlines and
+	// never escapes the tokens.
+	const line = assistant.querySelector(".line")!;
+	const copy = synthesizeCopy(document, window, mockRange(line, document));
+	expect(copy.prevented).toBe(true);
+	expect(copy.records["text/plain"]).toBe("git add a__b\necho *x*");
+});
+
+test("selection including the code-block wrapper still produces a fenced block", () => {
+	const { document, window, assistant } = setupCodePage(
+		'<div class="md-code-block"><div><div><div>bash</div><div><button type="button">复制</button></div></div></div>' +
+			'<pre class="plain"><code>git add a__b</code></pre></div>'
+	);
+
+	const payload = loadBundle({ window, document });
+	const ctx = fakeCtx();
+	payload.factory(() => {}).apply(ctx);
+
+	// The selection starts on the wrapper itself, so its endpoints are NOT
+	// inside a code element — the whole block keeps the fenced-block path.
+	const block = assistant.querySelector(".md-code-block")!;
+	const copy = synthesizeCopy(document, window, mockRange(block, document));
+	expect(copy.prevented).toBe(true);
+	expect(copy.records["text/plain"]).toBe("```bash\ngit add a__b\n```");
+});
+
+test("selection inside inline code in prose copies verbatim (no escaping)", () => {
+	const { document, window, assistant } = setupCodePage("<p>run <code>a__b</code> now</p>");
+
+	const payload = loadBundle({ window, document });
+	const ctx = fakeCtx();
+	payload.factory(() => {}).apply(ctx);
+
+	const code = assistant.querySelector("code")!;
+	const copy = synthesizeCopy(document, window, mockRange(code.firstChild!, document));
+	expect(copy.prevented).toBe(true);
+	expect(copy.records["text/plain"]).toBe("a__b");
 });

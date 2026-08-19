@@ -106,6 +106,16 @@ test("plain markdown-significant characters are escaped", () => {
 	expect(convert(html)).toBe("a \\*b\\* \\[c\\] \\`d\\`");
 });
 
+test("intraword underscores in prose are kept verbatim", () => {
+	const html = "<p>run npm install inside node_modules; see Asianfleet__dsh-message-copy-enhance</p>";
+	expect(convert(html)).toBe("run npm install inside node_modules; see Asianfleet__dsh-message-copy-enhance");
+});
+
+test("underscores at emphasis boundaries are still escaped", () => {
+	const html = "<p>_foo_ bar _ baz</p>";
+	expect(convert(html)).toBe("\\_foo\\_ bar \\_ baz");
+});
+
 test("empty / non-content input yields empty output", () => {
 	expect(convert("<div></div>")).toBe("");
 	expect(convert("<p>  </p>")).toBe("");

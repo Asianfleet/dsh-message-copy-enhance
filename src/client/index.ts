@@ -46,8 +46,47 @@ function expandToWholeMath(range: Range): void {
 	if (endMath != null) range.setEndAfter(endMath);
 }
 
+/** The code containers whose text must never be treated as markdown prose. */
+const CODE_CONTAINER_SELECTOR = "pre, code";
+
+/**
+ * Short-circuit for selections that lie entirely inside one code element.
+ *
+ * When the user selects text strictly inside a plain (unhighlighted) code
+ * block, `cloneContents` strips the `pre`/`code` wrapper and the DOM→Markdown
+ * converter then re-escapes the source as markdown prose (`_` → `\_`,
+ * `*` → `\*`, …). Code text must reach the clipboard verbatim, so detect that
+ * selection shape up front and return the selection's own text instead of
+ * letting the converter run.
+ *
+ * Returns `null` when the selection is not strictly inside a single code
+ * element (the wrapper is included in the selection, or it spans several
+ * containers — those keep the normal fenced-block path), or when the code is
+ * shiki-highlighted: its `.line` spans carry inter-line newlines only in CSS,
+ * which `range.toString` would drop, so the converter's line-reconstruction
+ * path must keep running there.
+ */
+function selectionInsideCode(range: Range): string | null {
+	const startEl = elementOf(range.startContainer);
+	const endEl = elementOf(range.endContainer);
+	const startCode = startEl != null ? startEl.closest(CODE_CONTAINER_SELECTOR) : null;
+	const endCode = endEl != null ? endEl.closest(CODE_CONTAINER_SELECTOR) : null;
+	// Both endpoints inside the same code element implies the whole range sits
+	// inside it, so the selection cannot include the container itself; a
+	// selection that reaches outside the block (fence-worthy) fails here.
+	if (startCode == null || startCode !== endCode) return null;
+	// Shiki layout: let the converter rebuild newlines from the .line spans.
+	if (startCode.querySelector(".line") != null) return null;
+	return range.toString();
+}
+
 function selectionToMarkdown(range: Range): string {
 	expandToWholeMath(range);
+	// Code is never markdown prose: a selection strictly inside a plain code
+	// element must copy verbatim, not be escaped by the converter (which only
+	// sees the bare text nodes once the wrapper is gone).
+	const code = selectionInsideCode(range);
+	if (code !== null) return code;
 	const fragment = range.cloneContents();
 	const container = document.createElement("div");
 	container.appendChild(fragment);
