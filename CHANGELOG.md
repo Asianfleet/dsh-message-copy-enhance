@@ -1,5 +1,15 @@
 # Changelog
 
+## [0.2.1](https://github.com/Asianfleet/dsh-message-copy-enhance/compare/v0.2.0...v0.2.1) (2026-08-19)
+
+### Bug Fixes
+
+* copy code and intraword underscores verbatim without markdown ([d66b444](https://github.com/Asianfleet/dsh-message-copy-enhance/commit/d66b444e416d959da9eae3376117480b42178c58))
+
+### Documentation
+
+* document explicit upgrade command for pre-1.0 minor bumps ([ef51d8a](https://github.com/Asianfleet/dsh-message-copy-enhance/commit/ef51d8ae3cacd5d6944aa4d130f3d27cfed6390b))
+
 ## [0.2.0](https://github.com/Asianfleet/dsh-message-copy-enhance/compare/v0.1.0...v0.2.0) (2026-08-18)
 
 ### Features

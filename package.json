@@ -1,6 +1,6 @@
 {
   "name": "dsh-message-copy-enhance",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Copy dsh assistant output as Markdown, preserving links, LaTeX sources and code fences.",
   "keywords": [
     "dsh",
