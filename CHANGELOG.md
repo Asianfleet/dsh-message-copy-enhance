@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.2.0](https://github.com/Asianfleet/dsh-message-copy-enhance/compare/v0.1.0...v0.2.0) (2026-08-18)
+
+### Features
+
+* add release-it pipeline with conventional changelog generation ([b822a39](https://github.com/Asianfleet/dsh-message-copy-enhance/commit/b822a39ce9e8a3e230a11a4c6792b221798dea0b))
+
+### Bug Fixes
+
+* build before test in prepublishOnly and use katex devDependency ([3c05b4e](https://github.com/Asianfleet/dsh-message-copy-enhance/commit/3c05b4e269a3748ad1bb58f9d50dc4b9827e1ab6))
+
+### Build System
+
+* switch client bundle to vite and tests to vitest ([695dabe](https://github.com/Asianfleet/dsh-message-copy-enhance/commit/695dabe179cca08c0dcb1f4bb3f332a3cf96a618))
+
+### Chores
+
+* normalize repository.url to git+https (npm pkg fix) ([2923702](https://github.com/Asianfleet/dsh-message-copy-enhance/commit/2923702de168b44df9ae9b3676fd6c857bc2ae70))
+
 ## [0.1.0] - 2026-08-18
 
 ### Added
